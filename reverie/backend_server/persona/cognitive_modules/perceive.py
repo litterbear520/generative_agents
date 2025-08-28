@@ -1,8 +1,8 @@
 """
-Author: Joon Sung Park (joonspk@stanford.edu)
+作者: Joon Sung Park (joonspk@stanford.edu)
 
-File: perceive.py
-Description: This defines the "Perceive" module for generative agents. 
+文件: perceive.py
+描述: 定义生成式智能体的"感知"模块。
 """
 import sys
 sys.path.append('../../')
@@ -24,30 +24,25 @@ def generate_poig_score(persona, event_type, description):
 
 def perceive(persona, maze): 
   """
-  Perceives events around the persona and saves it to the memory, both events 
-  and spaces. 
+  感知智能体周围的事件并将其保存到记忆中，包括事件和空间信息。
 
-  We first perceive the events nearby the persona, as determined by its 
-  <vision_r>. If there are a lot of events happening within that radius, we 
-  take the <att_bandwidth> of the closest events. Finally, we check whether
-  any of them are new, as determined by <retention>. If they are new, then we
-  save those and return the <ConceptNode> instances for those events. 
+  我们首先感知智能体附近的事件，由其 <vision_r> 视野半径决定。如果该半径内
+  发生了很多事件，我们会取 <att_bandwidth> 个最近的事件。最后，我们检查
+  其中是否有新事件，由 <retention> 保留期决定。如果它们是新的，那么我们
+  保存这些事件并返回这些事件的 <ConceptNode> 实例。
 
-  INPUT: 
-    persona: An instance of <Persona> that represents the current persona. 
-    maze: An instance of <Maze> that represents the current maze in which the 
-          persona is acting in. 
-  OUTPUT: 
-    ret_events: a list of <ConceptNode> that are perceived and new. 
+  输入: 
+    persona: 表示当前智能体的 <Persona> 实例。
+    maze: 表示智能体正在其中行动的当前迷宫的 <Maze> 实例。
+  输出: 
+    ret_events: 被感知到的新 <ConceptNode> 列表。
   """
-  # PERCEIVE SPACE
-  # We get the nearby tiles given our current tile and the persona's vision
-  # radius. 
+  # 感知空间
+  # 根据我们当前的瓦片位置和智能体的视野半径，获取附近的瓦片。
   nearby_tiles = maze.get_nearby_tiles(persona.scratch.curr_tile, 
                                        persona.scratch.vision_r)
 
-  # We then store the perceived space. Note that the s_mem of the persona is
-  # in the form of a tree constructed using dictionaries. 
+  # 然后我们存储感知到的空间。注意智能体的 s_mem 是使用字典构建的树形结构。 
   for i in nearby_tiles: 
     i = maze.access_tile(i)
     if i["world"]: 
@@ -67,62 +62,54 @@ def perceive(persona, maze):
         persona.s_mem.tree[i["world"]][i["sector"]][i["arena"]] += [
                                                              i["game_object"]]
 
-  # PERCEIVE EVENTS. 
-  # We will perceive events that take place in the same arena as the
-  # persona's current arena. 
+  # 感知事件
+  # 我们将感知发生在智能体当前竞技场相同竞技场中的事件。
   curr_arena_path = maze.get_tile_path(persona.scratch.curr_tile, "arena")
-  # We do not perceive the same event twice (this can happen if an object is
-  # extended across multiple tiles).
+  # 我们不会感知同一个事件两次（如果一个物体跨越多个瓦片，可能会发生这种情况）。
   percept_events_set = set()
-  # We will order our percept based on the distance, with the closest ones
-  # getting priorities. 
+  # 我们将根据距离对感知进行排序，最近的事件获得优先级。
   percept_events_list = []
-  # First, we put all events that are occuring in the nearby tiles into the
-  # percept_events_list
+  # 首先，我们将附近瓦片中发生的所有事件放入 percept_events_list
   for tile in nearby_tiles: 
     tile_details = maze.access_tile(tile)
     if tile_details["events"]: 
       if maze.get_tile_path(tile, "arena") == curr_arena_path:  
-        # This calculates the distance between the persona's current tile, 
-        # and the target tile.
+        # 计算智能体当前瓦片与目标瓦片之间的距离。
         dist = math.dist([tile[0], tile[1]], 
                          [persona.scratch.curr_tile[0], 
                           persona.scratch.curr_tile[1]])
-        # Add any relevant events to our temp set/list with the distant info. 
+        # 将任何相关事件及其距离信息添加到我们的临时集合/列表中。 
         for event in tile_details["events"]: 
           if event not in percept_events_set: 
             percept_events_list += [[dist, event]]
             percept_events_set.add(event)
 
-  # We sort, and perceive only persona.scratch.att_bandwidth of the closest
-  # events. If the bandwidth is larger, then it means the persona can perceive
-  # more elements within a small area. 
+  # 我们排序并只感知最近的 persona.scratch.att_bandwidth 个事件。
+  # 如果带宽更大，则意味着智能体可以在小范围内感知更多元素。
   percept_events_list = sorted(percept_events_list, key=itemgetter(0))
   perceived_events = []
   for dist, event in percept_events_list[:persona.scratch.att_bandwidth]: 
     perceived_events += [event]
 
-  # Storing events. 
-  # <ret_events> is a list of <ConceptNode> instances from the persona's 
-  # associative memory. 
+  # 存储事件
+  # <ret_events> 是来自智能体联想记忆的 <ConceptNode> 实例列表。 
   ret_events = []
   for p_event in perceived_events: 
     s, p, o, desc = p_event
     if not p: 
-      # If the object is not present, then we default the event to "idle".
+      # 如果物体不存在，那么我们将事件默认为"idle"。
       p = "is"
       o = "idle"
       desc = "idle"
     desc = f"{s.split(':')[-1]} is {desc}"
     p_event = (s, p, o)
 
-    # We retrieve the latest persona.scratch.retention events. If there is  
-    # something new that is happening (that is, p_event not in latest_events),
-    # then we add that event to the a_mem and return it. 
+    # 我们检索最新的 persona.scratch.retention 个事件。如果发生了新事情
+    # （即 p_event 不在 latest_events 中），那么我们将该事件添加到 a_mem 并返回它。 
     latest_events = persona.a_mem.get_summarized_latest_events(
                                     persona.scratch.retention)
     if p_event not in latest_events:
-      # We start by managing keywords. 
+      # 我们首先管理关键词。
       keywords = set()
       sub = p_event[0]
       obj = p_event[2]
@@ -132,7 +119,7 @@ def perceive(persona, maze):
         obj = p_event[2].split(":")[-1]
       keywords.update([sub, obj])
 
-      # Get event embedding
+      # 获取事件嵌入
       desc_embedding_in = desc
       if "(" in desc: 
         desc_embedding_in = (desc_embedding_in.split("(")[1]
@@ -144,13 +131,12 @@ def perceive(persona, maze):
         event_embedding = get_embedding(desc_embedding_in)
       event_embedding_pair = (desc_embedding_in, event_embedding)
       
-      # Get event poignancy. 
+      # 获取事件重要性。
       event_poignancy = generate_poig_score(persona, 
                                             "event", 
                                             desc_embedding_in)
 
-      # If we observe the persona's self chat, we include that in the memory
-      # of the persona here. 
+      # 如果我们观察到智能体的自我对话，我们在这里将其包含在智能体的记忆中。 
       chat_node_ids = []
       if p_event[0] == f"{persona.name}" and p_event[1] == "chat with": 
         curr_event = persona.scratch.act_event
@@ -171,7 +157,7 @@ def perceive(persona, maze):
                       persona.scratch.chat)
         chat_node_ids = [chat_node.node_id]
 
-      # Finally, we add the current event to the agent's memory. 
+      # 最后，我们将当前事件添加到智能体的记忆中。 
       ret_events += [persona.a_mem.add_event(persona.scratch.curr_time, None,
                            s, p, o, desc, keywords, event_poignancy, 
                            event_embedding_pair, chat_node_ids)]

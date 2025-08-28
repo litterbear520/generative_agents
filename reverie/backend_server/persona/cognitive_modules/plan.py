@@ -1,8 +1,8 @@
 """
-Author: Joon Sung Park (joonspk@stanford.edu)
+作者: Joon Sung Park (joonspk@stanford.edu)
 
-File: plan.py
-Description: This defines the "Plan" module for generative agents. 
+文件: plan.py
+描述: 定义生成式智能体的"规划"模块。
 """
 import datetime
 import math
@@ -930,36 +930,32 @@ def _wait_react(persona, reaction_mode):
 
 def plan(persona, maze, personas, new_day, retrieved): 
   """
-  Main cognitive function of the chain. It takes the retrieved memory and 
-  perception, as well as the maze and the first day state to conduct both 
-  the long term and short term planning for the persona. 
+  链的主要认知功能。它接受检索到的记忆和感知，以及迷宫和第一天状态，
+  为智能体进行长期和短期规划。
 
-  INPUT: 
-    maze: Current <Maze> instance of the world. 
-    personas: A dictionary that contains all persona names as keys, and the 
-              Persona instance as values. 
-    new_day: This can take one of the three values. 
-      1) <Boolean> False -- It is not a "new day" cycle (if it is, we would
-         need to call the long term planning sequence for the persona). 
-      2) <String> "First day" -- It is literally the start of a simulation,
-         so not only is it a new day, but also it is the first day. 
-      2) <String> "New day" -- It is a new day. 
-    retrieved: dictionary of dictionary. The first layer specifies an event,
-               while the latter layer specifies the "curr_event", "events", 
-               and "thoughts" that are relevant.
-  OUTPUT 
-    The target action address of the persona (persona.scratch.act_address).
+  输入: 
+    maze: 世界的当前 <Maze> 实例。
+    personas: 包含所有智能体名称作为键，Persona 实例作为值的字典。
+    new_day: 这可以取三个值之一。
+      1) <Boolean> False -- 这不是"新的一天"周期（如果是，我们需要为智能体
+         调用长期规划序列）。
+      2) <String> "First day" -- 这是仿真的字面开始，所以不仅是新的一天，
+         也是第一天。
+      2) <String> "New day" -- 这是新的一天。
+    retrieved: 字典的字典。第一层指定一个事件，后一层指定相关的
+              "curr_event"、"events" 和 "thoughts"。
+  输出 
+    智能体的目标动作地址 (persona.scratch.act_address)。
   """ 
-  # PART 1: Generate the hourly schedule. 
+  # 第1部分：生成每小时时间表。
   if new_day: 
     _long_term_planning(persona, new_day)
 
-  # PART 2: If the current action has expired, we want to create a new plan.
+  # 第2部分：如果当前动作已过期，我们想要创建一个新计划。
   if persona.scratch.act_check_finished(): 
     _determine_action(persona, maze)
 
-  # PART 3: If you perceived an event that needs to be responded to (saw 
-  # another persona), and retrieved relevant information. 
+  # 第3部分：如果你感知到需要回应的事件（看到另一个智能体），并检索相关信息。 
   # Step 1: Retrieved may have multiple events represented in it. The first 
   #         job here is to determine which of the events we want to focus 
   #         on for the persona. 

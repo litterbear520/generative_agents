@@ -1,8 +1,8 @@
 """
-Author: Joon Sung Park (joonspk@stanford.edu)
+作者: Joon Sung Park (joonspk@stanford.edu)
 
-File: scratch.py
-Description: Defines the short-term memory module for generative agents.
+文件: scratch.py
+描述: 定义生成式智能体的短期记忆模块。
 """
 import datetime
 import json
@@ -13,39 +13,38 @@ from global_methods import *
 
 class Scratch: 
   def __init__(self, f_saved): 
-    # PERSONA HYPERPARAMETERS
-    # <vision_r> denotes the number of tiles that the persona can see around 
-    # them. 
+    # 智能体超参数
+    # <vision_r> 表示智能体可以看到周围的瓦片数量。
     self.vision_r = 4
-    # <att_bandwidth> TODO 
+    # <att_bandwidth> 注意力带宽
     self.att_bandwidth = 3
-    # <retention> TODO 
+    # <retention> 保留期
     self.retention = 5
 
-    # WORLD INFORMATION
-    # Perceived world time. 
+    # 世界信息
+    # 感知的世界时间。
     self.curr_time = None
-    # Current x,y tile coordinate of the persona. 
+    # 智能体的当前 x,y 瓦片坐标。
     self.curr_tile = None
-    # Perceived world daily requirement. 
+    # 感知的世界每日要求。
     self.daily_plan_req = None
     
-    # THE CORE IDENTITY OF THE PERSONA 
-    # Base information about the persona.
+    # 智能体的核心身份
+    # 关于智能体的基本信息。
     self.name = None
     self.first_name = None
     self.last_name = None
     self.age = None
-    # L0 permanent core traits.  
+    # L0 永久核心特征。
     self.innate = None
-    # L1 stable traits.
+    # L1 稳定特征。
     self.learned = None
-    # L2 external implementation. 
+    # L2 外部实现。
     self.currently = None
     self.lifestyle = None
     self.living_area = None
 
-    # REFLECTION VARIABLES
+    # 反思变量
     self.concept_forget = 100
     self.daily_reflection_time = 60 * 3
     self.daily_reflection_size = 5
@@ -53,7 +52,7 @@ class Scratch:
     self.kw_strg_event_reflect_th = 4
     self.kw_strg_thought_reflect_th = 4
 
-    # New reflection variables
+    # 新的反思变量
     self.recency_w = 1
     self.relevance_w = 1
     self.importance_w = 1
@@ -63,16 +62,14 @@ class Scratch:
     self.importance_ele_n = 0 
     self.thought_count = 5
 
-    # PERSONA PLANNING 
-    # <daily_req> is a list of various goals the persona is aiming to achieve
-    # today. 
-    # e.g., ['Work on her paintings for her upcoming show', 
+    # 智能体规划
+    # <daily_req> 是智能体今天要实现的各种目标列表。
+    # 例如：['Work on her paintings for her upcoming show', 
     #        'Take a break to watch some TV', 
     #        'Make lunch for herself', 
     #        'Work on her paintings some more', 
     #        'Go to bed early']
-    # They have to be renewed at the end of the day, which is why we are
-    # keeping track of when they were first generated. 
+    # 它们必须在一天结束时更新，这就是为什么我们要跟踪它们首次生成的时间。
     self.daily_req = []
     # <f_daily_schedule> denotes a form of long term planning. This lays out 
     # the persona's daily plan. 
@@ -236,11 +233,11 @@ class Scratch:
 
   def save(self, out_json):
     """
-    Save persona's scratch. 
+    保存智能体的短期记忆。
 
-    INPUT: 
-      out_json: The file where we wil be saving our persona's state. 
-    OUTPUT: 
+    输入: 
+      out_json: 我们将保存智能体状态的文件。
+    输出: 
       None
     """
     scratch = dict() 
@@ -312,22 +309,21 @@ class Scratch:
 
   def get_f_daily_schedule_index(self, advance=0):
     """
-    We get the current index of self.f_daily_schedule. 
+    获取 self.f_daily_schedule 的当前索引。
 
-    Recall that self.f_daily_schedule stores the decomposed action sequences 
-    up until now, and the hourly sequences of the future action for the rest
-    of today. Given that self.f_daily_schedule is a list of list where the 
-    inner list is composed of [task, duration], we continue to add up the 
-    duration until we reach "if elapsed > today_min_elapsed" condition. The
-    index where we stop is the index we will return. 
+    回忆一下，self.f_daily_schedule 存储到目前为止的分解动作序列，
+    以及今天剩余时间的未来动作的每小时序列。鉴于 self.f_daily_schedule 
+    是一个列表的列表，其中内部列表由 [任务, 持续时间] 组成，我们继续
+    累加持续时间，直到达到 "if elapsed > today_min_elapsed" 条件。
+    我们停止的索引就是我们将返回的索引。
 
-    INPUT
-      advance: Integer value of the number minutes we want to look into the 
-               future. This allows us to get the index of a future timeframe.
-    OUTPUT 
-      an integer value for the current index of f_daily_schedule.
+    输入
+      advance: 我们想要查看未来的分钟数的整数值。这允许我们获得
+               未来时间框架的索引。
+    输出 
+      f_daily_schedule 当前索引的整数值。
     """
-    # We first calculate teh number of minutes elapsed today. 
+    # 我们首先计算今天已经过去的分钟数。
     today_min_elapsed = 0
     today_min_elapsed += self.curr_time.hour * 60
     today_min_elapsed += self.curr_time.minute
@@ -340,7 +336,7 @@ class Scratch:
     for task, duration in self.f_daily_schedule_hourly_org: 
       x += duration
 
-    # We then calculate the current index based on that. 
+    # 然后我们基于此计算当前索引。 
     curr_index = 0
     elapsed = 0
     for task, duration in self.f_daily_schedule: 
@@ -381,15 +377,14 @@ class Scratch:
 
   def get_str_iss(self): 
     """
-    ISS stands for "identity stable set." This describes the commonset summary
-    of this persona -- basically, the bare minimum description of the persona
-    that gets used in almost all prompts that need to call on the persona. 
+    ISS 代表"身份稳定集"。这描述了此智能体的通用集合摘要 -- 基本上是
+    智能体的最基本描述，几乎在所有需要调用智能体的提示中都会用到。
 
-    INPUT
+    输入
       None
-    OUTPUT
-      the identity stable set summary of the persona in a string form.
-    EXAMPLE STR OUTPUT
+    输出
+      智能体身份稳定集摘要的字符串形式。
+    示例字符串输出
       "Name: Dolores Heitmiller
        Age: 28
        Innate traits: hard-edged, independent, loyal

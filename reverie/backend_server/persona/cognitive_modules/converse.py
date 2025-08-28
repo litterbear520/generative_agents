@@ -1,8 +1,8 @@
 """
-Author: Joon Sung Park (joonspk@stanford.edu)
+作者: Joon Sung Park (joonspk@stanford.edu)
 
-File: converse.py
-Description: An extra cognitive module for generating conversations. 
+文件: converse.py
+描述: 用于生成对话的额外认知模块。
 """
 import math
 import sys
@@ -74,7 +74,7 @@ def generate_agent_chat(maze,
 
 
 def agent_chat_v1(maze, init_persona, target_persona): 
-  # Chat version optimized for speed via batch generation
+  # 通过批量生成优化速度的聊天版本
   curr_context = (f"{init_persona.scratch.name} " + 
               f"was {init_persona.scratch.act_description} " + 
               f"when {init_persona.scratch.name} " + 

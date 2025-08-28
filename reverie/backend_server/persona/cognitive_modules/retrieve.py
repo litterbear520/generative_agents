@@ -1,8 +1,8 @@
 """
-Author: Joon Sung Park (joonspk@stanford.edu)
+作者: Joon Sung Park (joonspk@stanford.edu)
 
-File: retrieve.py
-Description: This defines the "Retrieve" module for generative agents. 
+文件: retrieve.py
+描述: 定义生成式智能体的"检索"模块。
 """
 import sys
 sys.path.append('../../')
@@ -15,21 +15,17 @@ from numpy.linalg import norm
 
 def retrieve(persona, perceived): 
   """
-  This function takes the events that are perceived by the persona as input
-  and returns a set of related events and thoughts that the persona would 
-  need to consider as context when planning. 
+  此函数接受智能体感知到的事件作为输入，并返回智能体在规划时需要考虑作为上下文的
+  相关事件和思考集合。
 
-  INPUT: 
-    perceived: a list of event <ConceptNode>s that represent any of the events
-    `         that are happening around the persona. What is included in here
-              are controlled by the att_bandwidth and retention 
-              hyper-parameters.
-  OUTPUT: 
-    retrieved: a dictionary of dictionary. The first layer specifies an event, 
-               while the latter layer specifies the "curr_event", "events", 
-               and "thoughts" that are relevant.
+  输入: 
+    perceived: 表示智能体周围发生的任何事件的事件 <ConceptNode> 列表。
+              这里包含的内容由 att_bandwidth 和 retention 超参数控制。
+  输出: 
+    retrieved: 字典的字典。第一层指定一个事件，后一层指定相关的
+              "curr_event"、"events" 和 "thoughts"。
   """
-  # We rerieve events and thoughts separately. 
+  # 我们分别检索事件和思考。 
   retrieved = dict()
   for event in perceived: 
     retrieved[event.description] = dict()
@@ -48,19 +44,16 @@ def retrieve(persona, perceived):
 
 def cos_sim(a, b): 
   """
-  This function calculates the cosine similarity between two input vectors 
-  'a' and 'b'. Cosine similarity is a measure of similarity between two 
-  non-zero vectors of an inner product space that measures the cosine 
-  of the angle between them.
+  此函数计算两个输入向量 'a' 和 'b' 之间的余弦相似度。余弦相似度是内积空间中
+  两个非零向量之间相似度的度量，它度量它们之间角度的余弦值。
 
-  INPUT: 
-    a: 1-D array object 
-    b: 1-D array object 
-  OUTPUT: 
-    A scalar value representing the cosine similarity between the input 
-    vectors 'a' and 'b'.
+  输入: 
+    a: 1维数组对象
+    b: 1维数组对象
+  输出: 
+    表示输入向量 'a' 和 'b' 之间余弦相似度的标量值。
   
-  Example input: 
+  输入示例: 
     a = [0.3, 0.2, 0.5]
     b = [0.2, 0.2, 0.5]
   """
@@ -131,16 +124,14 @@ def top_highest_x_values(d, x):
 
 def extract_recency(persona, nodes):
   """
-  Gets the current Persona object and a list of nodes that are in a 
-  chronological order, and outputs a dictionary that has the recency score
-  calculated.
+  获取当前 Persona 对象和按时间顺序排列的节点列表，并输出包含计算出的
+  时近性分数的字典。
 
-  INPUT: 
-    persona: Current persona whose memory we are retrieving. 
-    nodes: A list of Node object in a chronological order. 
-  OUTPUT: 
-    recency_out: A dictionary whose keys are the node.node_id and whose values
-                 are the float that represents the recency score. 
+  输入: 
+    persona: 我们正在检索其记忆的当前智能体。
+    nodes: 按时间顺序排列的节点对象列表。
+  输出: 
+    recency_out: 字典，其键为 node.node_id，值为表示时近性分数的浮点数。
   """
   recency_vals = [persona.scratch.recency_decay ** i 
                   for i in range(1, len(nodes) + 1)]
@@ -198,36 +189,31 @@ def extract_relevance(persona, nodes, focal_pt):
 
 def new_retrieve(persona, focal_points, n_count=30): 
   """
-  Given the current persona and focal points (focal points are events or 
-  thoughts for which we are retrieving), we retrieve a set of nodes for each
-  of the focal points and return a dictionary. 
+  给定当前智能体和焦点（焦点是我们要检索的事件或思考），我们为每个焦点检索
+  一组节点并返回一个字典。
 
-  INPUT: 
-    persona: The current persona object whose memory we are retrieving. 
-    focal_points: A list of focal points (string description of the events or
-                  thoughts that is the focus of current retrieval).
-  OUTPUT: 
-    retrieved: A dictionary whose keys are a string focal point, and whose 
-               values are a list of Node object in the agent's associative 
-               memory.
+  输入: 
+    persona: 我们正在检索其记忆的当前智能体对象。
+    focal_points: 焦点列表（作为当前检索焦点的事件或思考的字符串描述）。
+  输出: 
+    retrieved: 字典，其键为字符串焦点，值为智能体联想记忆中的节点对象列表。
 
-  Example input:
-    persona = <persona> object 
+  输入示例:
+    persona = <persona> 对象 
     focal_points = ["How are you?", "Jane is swimming in the pond"]
   """
-  # <retrieved> is the main dictionary that we are returning
+  # <retrieved> 是我们返回的主要字典
   retrieved = dict() 
   for focal_pt in focal_points: 
-    # Getting all nodes from the agent's memory (both thoughts and events) and
-    # sorting them by the datetime of creation.
-    # You could also imagine getting the raw conversation, but for now. 
+    # 从智能体的记忆中获取所有节点（思考和事件），并按创建的日期时间排序。
+    # 你也可以想象获取原始对话，但目前先这样。
     nodes = [[i.last_accessed, i]
               for i in persona.a_mem.seq_event + persona.a_mem.seq_thought
               if "idle" not in i.embedding_key]
     nodes = sorted(nodes, key=lambda x: x[0])
     nodes = [i for created, i in nodes]
 
-    # Calculating the component dictionaries and normalizing them.
+    # 计算组件字典并对其进行归一化。
     recency_out = extract_recency(persona, nodes)
     recency_out = normalize_dict_floats(recency_out, 0, 1)
     importance_out = extract_importance(persona, nodes)
@@ -235,10 +221,9 @@ def new_retrieve(persona, focal_points, n_count=30):
     relevance_out = extract_relevance(persona, nodes, focal_pt)
     relevance_out = normalize_dict_floats(relevance_out, 0, 1)
 
-    # Computing the final scores that combines the component values. 
-    # Note to self: test out different weights. [1, 1, 1] tends to work
-    # decently, but in the future, these weights should likely be learned, 
-    # perhaps through an RL-like process.
+    # 计算结合组件值的最终分数。
+    # 自我提醒：测试不同的权重。[1, 1, 1] 通常工作得相当好，
+    # 但在未来，这些权重可能应该通过类似 RL 的过程来学习。
     # gw = [1, 1, 1]
     # gw = [1, 2, 1]
     gw = [0.5, 3, 2]
@@ -255,10 +240,9 @@ def new_retrieve(persona, focal_points, n_count=30):
              persona.scratch.relevance_w*relevance_out[key]*1, 
              persona.scratch.importance_w*importance_out[key]*1)
 
-    # Extracting the highest x values.
-    # <master_out> has the key of node.id and value of float. Once we get the 
-    # highest x values, we want to translate the node.id into nodes and return
-    # the list of nodes.
+    # 提取最高的 x 个值。
+    # <master_out> 具有 node.id 的键和浮点数的值。一旦我们得到最高的 x 个值，
+    # 我们希望将 node.id 转换为节点并返回节点列表。
     master_out = top_highest_x_values(master_out, n_count)
     master_nodes = [persona.a_mem.id_to_node[key] 
                     for key in list(master_out.keys())]

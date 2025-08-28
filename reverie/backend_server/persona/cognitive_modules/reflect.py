@@ -1,8 +1,8 @@
 """
-Author: Joon Sung Park (joonspk@stanford.edu)
+作者: Joon Sung Park (joonspk@stanford.edu)
 
-File: reflect.py
-Description: This defines the "Reflect" module for generative agents. 
+文件: reflect.py
+描述: 定义生成式智能体的"反思"模块。
 """
 import sys
 sys.path.append('../../')
@@ -98,22 +98,20 @@ def generate_memo_on_convo(persona, all_utt):
 
 def run_reflect(persona):
   """
-  Run the actual reflection. We generate the focal points, retrieve any 
-  relevant nodes, and generate thoughts and insights. 
+  运行实际的反思。我们生成焦点，检索任何相关节点，并生成思考和见解。
 
-  INPUT: 
-    persona: Current Persona object
-  Output: 
+  输入: 
+    persona: 当前 Persona 对象
+  输出: 
     None
   """
-  # Reflection requires certain focal points. Generate that first. 
+  # 反思需要某些焦点。首先生成它们。
   focal_points = generate_focal_points(persona, 3)
-  # Retrieve the relevant Nodes object for each of the focal points. 
-  # <retrieved> has keys of focal points, and values of the associated Nodes. 
+  # 为每个焦点检索相关的节点对象。
+  # <retrieved> 以焦点为键，以关联的节点为值。
   retrieved = new_retrieve(persona, focal_points)
 
-  # For each of the focal points, generate thoughts and save it in the 
-  # agent's memory. 
+  # 为每个焦点生成思考并将其保存在智能体的记忆中。 
   for focal_pt, nodes in retrieved.items(): 
     xx = [i.embedding_key for i in nodes]
     for xxx in xx: print (xxx)
