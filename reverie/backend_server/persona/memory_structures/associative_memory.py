@@ -374,29 +374,53 @@ class AssociativeMemory:
   def add_chat(self, created, expiration, s, p, o, 
                      description, keywords, poignancy, 
                      embedding_pair, filling): 
-    # Setting up the node ID and counts.
+    """
+    向关联记忆中添加一个聊天事件。
+
+    参数:
+      created (datetime): 聊天事件的创建时间。
+      expiration (datetime): 聊天事件的过期时间。
+      s (ConceptNode): 聊天的主语节点。
+      p (ConceptNode): 聊天的谓语节点。
+      o (ConceptNode): 聊天的宾语节点。
+      description (str): 聊天事件的描述。
+      keywords (list): 与聊天事件相关的关键词列表。
+      poignancy (int): 聊天事件的深刻性/重要性。
+      embedding_pair (tuple): 包含嵌入ID和嵌入向量的元组。
+      filling (list): 聊天内容的详细填充信息。
+
+    返回值:
+      ConceptNode: 新创建的聊天事件节点。
+    """
+    # 设置节点ID和计数。
     node_count = len(self.id_to_node.keys()) + 1
     type_count = len(self.seq_chat) + 1
     node_type = "chat"
     node_id = f"node_{str(node_count)}"
     depth = 0
 
-    # Creating the <ConceptNode> object.
+    # 创建 ConceptNode 对象。
     node = ConceptNode(node_id, node_count, type_count, node_type, depth,
                        created, expiration, 
                        s, p, o, 
                        description, embedding_pair[0], poignancy, keywords, filling)
 
-    # Creating various dictionary cache for fast access. 
+    # 创建各种字典缓存以实现快速访问。
+    # 将新聊天事件添加到聊天序列的开头（最近的在前面）。
     self.seq_chat[0:0] = [node]
+    # 将关键词转换为小写。
     keywords = [i.lower() for i in keywords]
     for kw in keywords: 
+      # 如果关键词已存在，则将新节点添加到对应关键词的聊天事件列表开头。
       if kw in self.kw_to_chat: 
         self.kw_to_chat[kw][0:0] = [node]
+      # 否则，创建一个新的关键词条目。
       else: 
         self.kw_to_chat[kw] = [node]
+    # 将新节点添加到ID到节点映射中。
     self.id_to_node[node_id] = node 
 
+    # 存储嵌入向量。
     self.embeddings[embedding_pair[0]] = embedding_pair[1]
         
     return node

@@ -71,88 +71,65 @@ class Scratch:
     #        'Go to bed early']
     # 它们必须在一天结束时更新，这就是为什么我们要跟踪它们首次生成的时间。
     self.daily_req = []
-    # <f_daily_schedule> denotes a form of long term planning. This lays out 
-    # the persona's daily plan. 
-    # Note that we take the long term planning and short term decomposition 
-    # appoach, which is to say that we first layout hourly schedules and 
-    # gradually decompose as we go. 
-    # Three things to note in the example below: 
-    # 1) See how "sleeping" was not decomposed -- some of the common events 
-    #    really, just mainly sleeping, are hard coded to be not decomposable.
-    # 2) Some of the elements are starting to be decomposed... More of the 
-    #    things will be decomposed as the day goes on (when they are 
-    #    decomposed, they leave behind the original hourly action description
-    #    in tact).
-    # 3) The latter elements are not decomposed. When an event occurs, the
-    #    non-decomposed elements go out the window.  
-    # e.g., [['sleeping', 360], 
-    #         ['wakes up and ... (wakes up and stretches ...)', 5], 
-    #         ['wakes up and starts her morning routine (out of bed )', 10],
-    #         ...
-    #         ['having lunch', 60], 
-    #         ['working on her painting', 180], ...]
+    # <f_daily_schedule> 表示一种长期规划形式，用于铺排人物当天的计划。
+    # 我们采用“长期规划 + 短期分解”的方法：先给出按小时的计划，随后逐步细化分解。
+    # 下面示例有三点说明：
+    # 1) 如 "sleeping" 不会再被分解（常见活动如睡眠被设定为不可分解）。
+    # 2) 某些元素会开始被分解，且随着一天进行会分解更多；被分解后仍保留原始的按小时描述。
+    # 3) 后续未分解的元素在新事件发生时可能会被替换或丢弃。
+    # 示例：[['sleeping', 360],
+    #       ['wakes up and ... (wakes up and stretches ...)', 5],
+    #       ['wakes up and starts her morning routine (out of bed )', 10],
+    #       ...
+    #       ['having lunch', 60],
+    #       ['working on her painting', 180], ...]
     self.f_daily_schedule = []
-    # <f_daily_schedule_hourly_org> is a replica of f_daily_schedule
-    # initially, but retains the original non-decomposed version of the hourly
-    # schedule. 
-    # e.g., [['sleeping', 360], 
-    #        ['wakes up and starts her morning routine', 120],
-    #        ['working on her painting', 240], ... ['going to bed', 60]]
+    # <f_daily_schedule_hourly_org> 初始时与 f_daily_schedule 相同，
+    # 但始终保留“未分解”的按小时版本。
+    # 示例：[['sleeping', 360],
+    #       ['wakes up and starts her morning routine', 120],
+    #       ['working on her painting', 240], ... ['going to bed', 60]]
     self.f_daily_schedule_hourly_org = []
     
-    # CURR ACTION 
-    # <address> is literally the string address of where the action is taking 
-    # place.  It comes in the form of 
-    # "{world}:{sector}:{arena}:{game_objects}". It is important that you 
-    # access this without doing negative indexing (e.g., [-1]) because the 
-    # latter address elements may not be present in some cases. 
-    # e.g., "dolores double studio:double studio:bedroom 1:bed"
+    # 当前动作（CURR ACTION）
+    # <address> 为动作发生地点的字符串地址，形如
+    # "{world}:{sector}:{arena}:{game_objects}"。
+    # 访问时请避免使用负索引（如 [-1]），因为后缀元素在某些情况下可能不存在。
+    # 例如："dolores double studio:double studio:bedroom 1:bed"
     self.act_address = None
-    # <start_time> is a python datetime instance that indicates when the 
-    # action has started. 
+    # <start_time> 为动作开始的 datetime 时间。
     self.act_start_time = None
-    # <duration> is the integer value that indicates the number of minutes an
-    # action is meant to last. 
+    # <duration> 为动作计划持续的分钟数（整数）。
     self.act_duration = None
-    # <description> is a string description of the action. 
+    # <description> 为动作的字符串描述。
     self.act_description = None
-    # <pronunciatio> is the descriptive expression of the self.description. 
-    # Currently, it is implemented as emojis. 
+    # <pronunciatio> 为对 self.description 的表达，目前用表情符号实现。
     self.act_pronunciatio = None
-    # <event_form> represents the event triple that the persona is currently 
-    # engaged in. 
+    # <event_form> 表示人物当前所处的事件三元组（SPO）。
     self.act_event = (self.name, None, None)
 
-    # <obj_description> is a string description of the object action. 
+    # <obj_description> 为“客体动作”的字符串描述。
     self.act_obj_description = None
-    # <obj_pronunciatio> is the descriptive expression of the object action. 
-    # Currently, it is implemented as emojis. 
+    # <obj_pronunciatio> 为“客体动作”的表达，目前用表情符号实现。
     self.act_obj_pronunciatio = None
-    # <obj_event_form> represents the event triple that the action object is  
-    # currently engaged in. 
+    # <obj_event_form> 表示动作客体当前所处的事件三元组（SPO）。
     self.act_obj_event = (self.name, None, None)
 
-    # <chatting_with> is the string name of the persona that the current 
-    # persona is chatting with. None if it does not exist. 
+    # <chatting_with> 为当前正在聊天的对象姓名字符串；若无则为 None。
     self.chatting_with = None
-    # <chat> is a list of list that saves a conversation between two personas.
-    # It comes in the form of: [["Dolores Murphy", "Hi"], 
-    #                           ["Maeve Jenson", "Hi"] ...]
+    # <chat> 保存两人对话的列表（列表的列表），形如：
+    # [["Dolores Murphy", "Hi"], ["Maeve Jenson", "Hi"], ...]
     self.chat = None
-    # <chatting_with_buffer>  
-    # e.g., ["Dolores Murphy"] = self.vision_r
+    # <chatting_with_buffer> 用于记录与谁在聊天的缓冲计数，例如：
+    # ["Dolores Murphy"] = self.vision_r
     self.chatting_with_buffer = dict()
     self.chatting_end_time = None
 
-    # <path_set> is True if we've already calculated the path the persona will
-    # take to execute this action. That path is stored in the persona's 
-    # scratch.planned_path.
+    # <path_set> 表示是否已计算执行当前动作的移动路径；路径保存在
+    # scratch.planned_path 中。
     self.act_path_set = False
-    # <planned_path> is a list of x y coordinate tuples (tiles) that describe
-    # the path the persona is to take to execute the <curr_action>. 
-    # The list does not include the persona's current tile, and includes the 
-    # destination tile. 
-    # e.g., [(50, 10), (49, 10), (48, 10), ...]
+    # <planned_path> 为路径上的 (x, y) 瓦片坐标元组列表，不包含当前所在瓦片，
+    # 但包含目的地瓦片。例如：[(50, 10), (49, 10), (48, 10), ...]
     self.planned_path = []
 
     if check_if_file_exists(f_saved): 
@@ -350,21 +327,20 @@ class Scratch:
 
   def get_f_daily_schedule_hourly_org_index(self, advance=0):
     """
-    We get the current index of self.f_daily_schedule_hourly_org. 
-    It is otherwise the same as get_f_daily_schedule_index. 
+    获取 self.f_daily_schedule_hourly_org 的当前索引。
+    逻辑与 get_f_daily_schedule_index 基本相同。
 
-    INPUT
-      advance: Integer value of the number minutes we want to look into the 
-               future. This allows us to get the index of a future timeframe.
-    OUTPUT 
-      an integer value for the current index of f_daily_schedule.
+    参数:
+      advance (int): 想要向前查看的分钟数，用于获取未来时间片的索引。
+    返回:
+      int: f_daily_schedule_hourly_org 当前索引。
     """
-    # We first calculate teh number of minutes elapsed today. 
+    # 首先计算今天已经过去的分钟数。
     today_min_elapsed = 0
     today_min_elapsed += self.curr_time.hour * 60
     today_min_elapsed += self.curr_time.minute
     today_min_elapsed += advance
-    # We then calculate the current index based on that. 
+    # 然后基于此计算当前索引。
     curr_index = 0
     elapsed = 0
     for task, duration in self.f_daily_schedule_hourly_org: 
@@ -513,13 +489,13 @@ class Scratch:
 
   def act_time_str(self): 
     """
-    Returns a string output of the current time. 
+    返回当前动作开始时间的字符串。
 
-    INPUT
+    参数:
       None
-    OUTPUT 
-      A string output of the current time.
-    EXAMPLE STR OUTPUT
+    返回:
+      str: 当前时间的字符串表示。
+    示例:
       "14:05 P.M."
     """
     return self.act_start_time.strftime("%H:%M %p")
@@ -527,14 +503,14 @@ class Scratch:
 
   def act_check_finished(self): 
     """
-    Checks whether the self.Action instance has finished.  
+    检查当前动作是否已完成。
 
-    INPUT
-      curr_datetime: Current time. If current time is later than the action's
-                     start time + its duration, then the action has finished. 
-    OUTPUT 
-      Boolean [True]: Action has finished.
-      Boolean [False]: Action has not finished and is still ongoing.
+    参数:
+      None
+    返回:
+      bool: True 表示已结束；False 表示仍在进行中。
+    说明:
+      若当前时间等于（聊天结束时间 或 开始时间对齐到整分后 + 持续时长）则判定结束。
     """
     if not self.act_address: 
       return True
@@ -555,12 +531,12 @@ class Scratch:
 
   def act_summarize(self):
     """
-    Summarize the current action as a dictionary. 
+    以字典形式总结当前动作（便于程序使用）。
 
-    INPUT
+    参数:
       None
-    OUTPUT 
-      ret: A human readable summary of the action.
+    返回:
+      dict: 对当前动作的结构化摘要。
     """
     exp = dict()
     exp["persona"] = self.name
@@ -574,13 +550,12 @@ class Scratch:
 
   def act_summary_str(self):
     """
-    Returns a string summary of the current action. Meant to be 
-    human-readable.
+    返回当前动作的可读字符串摘要（面向人类阅读）。
 
-    INPUT
+    参数:
       None
-    OUTPUT 
-      ret: A human readable summary of the action.
+    返回:
+      str: 当前动作的简要描述字符串。
     """
     start_datetime_str = self.act_start_time.strftime("%A %B %d -- %H:%M %p")
     ret = f"[{start_datetime_str}]\n"
