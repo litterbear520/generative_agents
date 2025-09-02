@@ -1,39 +1,3 @@
-"""
-作者: Joon Sung Park (joonspk@stanford.edu)
-
-文件: associative_memory.py
-描述: 定义生成式智能体的核心长期记忆模块。
-
-注意 (2023年5月1日) -- 这个类是生成式智能体论文中的记忆流(Memory Stream)模块。
-
-=== 联想记忆系统架构说明 ===
-
-1. 数据结构层次：
-   ConceptNode (概念节点) - 记忆的基本单元
-   ├── 标识信息: node_id, type, depth
-   ├── 时间属性: created, expiration, last_accessed  
-   ├── SPO结构: subject-predicate-object 三元组
-   └── 元数据: description, keywords, poignancy, embedding
-
-2. 记忆类型分类：
-   - Event (事件): depth=0, 直接观察的行为和状态变化
-   - Thought (思考): depth≥1, 基于事件的反思和抽象推理
-   - Chat (对话): depth=0, 与其他智能体的交流记录
-
-3. 索引机制：
-   - ID映射: id_to_node - 通过唯一ID快速定位节点
-   - 时序列表: seq_event/thought/chat - 按时间排序的记忆序列
-   - 关键词索引: kw_to_* - 支持基于关键词的快速检索
-   - 强度统计: kw_strength_* - 跟踪关键词的重要性权重
-   - 语义嵌入: embeddings - 支持向量相似度检索
-
-4. 核心操作：
-   - 添加记忆: add_event/thought/chat - 创建新记忆并更新索引
-   - 检索记忆: retrieve_relevant_* - 基于内容关联检索
-   - 持久化: save/load - JSON格式的序列化存储
-
-这个系统实现了人类记忆的关键特征：时序性、关联性、重要性权重、遗忘机制。
-"""
 import sys
 sys.path.append('../../')
 
@@ -42,16 +6,8 @@ import datetime
 
 from global_methods import *
 
-
+# 概念节点类，定义相关字段
 class ConceptNode: 
-  """
-  概念节点类 - 记忆流中的基本单元
-  
-  每个 ConceptNode 代表智能体记忆中的一个概念，可以是：
-  - 事件(event): 观察到的行为或状态变化，深度=0
-  - 思考(thought): 基于事件的反思和抽象，深度≥1  
-  - 对话(chat): 与其他智能体的交流记录，深度=0
-  """
   def __init__(self,
                node_id, node_count, type_count, node_type, depth,
                created, expiration, 
@@ -81,36 +37,14 @@ class ConceptNode:
     self.keywords = keywords        # 关键词集合(用于快速检索)
     self.filling = filling          # 填充信息(用于思考节点的支撑证据)
 
-
+  # 返回对象的SPO三元组
   def spo_summary(self): 
-    """
-    返回SPO三元组摘要
-    
-    返回:
-        tuple: (主语, 谓语, 宾语) 的元组形式
-    
-    示例:
-        ("Isabella Rodriguez", "is", "sleeping") 
-        ("咖啡馆", "位于", "小镇中心")
-    """
     return (self.subject, self.predicate, self.object)
 
-
+# 联想记忆类，定义相关字段
 class AssociativeMemory: 
-  """
-  联想记忆类 - 智能体的长期记忆系统
-  
-  这是AI小镇项目的核心记忆模块，实现了论文中的Memory Stream概念。
-  它维护智能体的所有长期记忆，并提供高效的检索机制。
-  
-  主要功能:
-  1. 存储三种类型的记忆: 事件、思考、对话
-  2. 提供多维度索引: ID映射、时序列表、关键词索引
-  3. 支持语义检索: 向量嵌入和相似度计算
-  4. 统计关键词强度: 用于重要性评估
-  """
   def __init__(self, f_saved): 
-    # === 核心数据结构 ===
+    # === 初始化空字典，用于存储节点ID到节点的映射表 ===
     self.id_to_node = dict()        # ID到节点的映射表 {"node_1": ConceptNode, ...}
 
     # === 按类型分类的时序列表 (最新的在前) ===
@@ -181,20 +115,9 @@ class AssociativeMemory:
     if kw_strength_load["kw_strength_thought"]: 
       self.kw_strength_thought = kw_strength_load["kw_strength_thought"]
 
-    
+  # 将记忆数据保存到JSON文件
   def save(self, out_json): 
-    """
-    将记忆数据保存到JSON文件
-    
-    这个方法将内存中的所有记忆节点序列化为JSON格式，保存到指定目录。
-    保存的文件包括:
-    1. nodes.json - 所有记忆节点的详细信息
-    2. kw_strength.json - 关键词强度统计
-    3. embeddings.json - 向量嵌入数据
-    
-    参数:
-        out_json (str): 输出目录路径
-    """
+
     # === 保存所有记忆节点到 nodes.json ===
     r = dict()
     # 注意：这里倒序遍历是为了保持节点ID的顺序性
@@ -243,39 +166,11 @@ class AssociativeMemory:
     with open(out_json+"/embeddings.json", "w") as outfile:
       json.dump(self.embeddings, outfile)
 
-
+  # 添加事件节点
   def add_event(self, created, expiration, s, p, o, 
                       description, keywords, poignancy, 
                       embedding_pair, filling):
-    """
-    添加新的事件记忆节点
-    
-    事件是智能体直接观察到的行为或状态变化，属于原始观察记忆（depth=0）。
-    
-    参数:
-        created (datetime): 事件发生时间
-        expiration (datetime): 过期时间（可为None） 
-        s (str): 主语 - 执行动作的主体
-        p (str): 谓语 - 动作或状态
-        o (str): 宾语 - 动作的对象或描述
-        description (str): 事件的自然语言描述
-        keywords (set): 关键词集合，用于检索
-        poignancy (int): 重要性评分 (1-10)
-        embedding_pair (tuple): (embedding_key, embedding_vector)
-        filling (list): 支撑信息（通常为空）
-        
-    返回:
-        ConceptNode: 创建的事件节点
-        
-    示例:
-        add_event(
-            created=datetime.now(),
-            s="Isabella Rodriguez", 
-            p="is", 
-            o="sleeping",
-            description="Isabella Rodriguez is sleeping"
-        )
-    """
+
     # === 设置节点标识和类型信息 ===
     node_count = len(self.id_to_node.keys()) + 1  # 全局节点计数器
     type_count = len(self.seq_event) + 1           # 事件节点计数器
@@ -326,7 +221,7 @@ class AssociativeMemory:
 
     return node
 
-
+  # 添加思考节点
   def add_thought(self, created, expiration, s, p, o, 
                         description, keywords, poignancy, 
                         embedding_pair, filling):
@@ -358,7 +253,7 @@ class AssociativeMemory:
         self.kw_to_thought[kw] = [node]
     self.id_to_node[node_id] = node 
 
-    # Adding in the kw_strength
+    # 添加关键词强度
     if f"{p} {o}" != "is idle":  
       for kw in keywords: 
         if kw in self.kw_strength_thought: 
@@ -370,28 +265,11 @@ class AssociativeMemory:
 
     return node
 
-
+  # 添加聊天节点
   def add_chat(self, created, expiration, s, p, o, 
                      description, keywords, poignancy, 
                      embedding_pair, filling): 
-    """
-    向关联记忆中添加一个聊天事件。
 
-    参数:
-      created (datetime): 聊天事件的创建时间。
-      expiration (datetime): 聊天事件的过期时间。
-      s (ConceptNode): 聊天的主语节点。
-      p (ConceptNode): 聊天的谓语节点。
-      o (ConceptNode): 聊天的宾语节点。
-      description (str): 聊天事件的描述。
-      keywords (list): 与聊天事件相关的关键词列表。
-      poignancy (int): 聊天事件的深刻性/重要性。
-      embedding_pair (tuple): 包含嵌入ID和嵌入向量的元组。
-      filling (list): 聊天内容的详细填充信息。
-
-    返回值:
-      ConceptNode: 新创建的聊天事件节点。
-    """
     # 设置节点ID和计数。
     node_count = len(self.id_to_node.keys()) + 1
     type_count = len(self.seq_chat) + 1
@@ -425,92 +303,69 @@ class AssociativeMemory:
         
     return node
 
-
+  # 获取最新的事件摘要
   def get_summarized_latest_events(self, retention): 
-    """
-    获取最近事件的SPO摘要集合
-    
-    从事件序列中提取最近的N个事件，返回它们的SPO三元组摘要。
-    这个方法用于快速获取智能体的近期经历概览。
-    
-    参数:
-        retention (int): 要检索的最近事件数量
-        
-    返回:
-        set: SPO三元组的集合 {(subject, predicate, object), ...}
-        
-    示例:
-        get_summarized_latest_events(5)
-        返回: {("Isabella", "is", "sleeping"), ("cafe", "is", "open"), ...}
-    """
+
     ret_set = set()
     # 从事件序列的开头取retention个事件（最新的在前）
     for e_node in self.seq_event[:retention]: 
       ret_set.add(e_node.spo_summary())
     return ret_set
 
-
+  # 获取事件序列的字符串表示
+  # 返回值示例：
+  # Event 1: (Isabella, is cooking, kitchen) -- Isabella is cooking in the kitchen
+  # Event 2: (Isabella, is painting, art) -- Isabella is painting art
+  # Event 3: (Isabella, is reading, book) -- Isabella is reading a book
+  
   def get_str_seq_events(self):
-    """
-    将按时间倒序排列的事件序列转换为字符串。
 
-    返回值:
-      str: 包含事件摘要和描述的格式化字符串。
-    """
     ret_str = ""
+    # Event + 序号 + SPO三元组 + 详细描述
     for count, event in enumerate(self.seq_event): 
       ret_str += f'{"Event", len(self.seq_event) - count, ": ", event.spo_summary(), " -- ", event.description}\n'
     return ret_str
 
+  # 获取思考序列的字符串表示
+  # 返回值示例：
+  # Thought 1: (Isabella, is thinking, art) -- Isabella is thinking about art
+  # Thought 2: (Isabella, is thinking, book) -- Isabella is thinking about a book
+  # Thought 3: (Isabella, is thinking, music) -- Isabella is thinking about music
 
   def get_str_seq_thoughts(self):
-    """
-    将按时间倒序排列的思考序列转换为字符串。
 
-    返回值:
-      str: 包含思考摘要和描述的格式化字符串，每个思考事件占据一行。
-    """
     ret_str = ""
+    # Thought + 序号 + SPO三元组 + 详细描述
+    # 思考通常比事件更复杂，描述更详细
     for count, event in enumerate(self.seq_thought):
       ret_str += f'{"Thought", len(self.seq_thought) - count, ": ", event.spo_summary(), " -- ", event.description}\n'
     return ret_str
 
 
-  def get_str_seq_chats(self):
-    """
-    将按时间倒序排列的聊天序列转换为字符串。
+  # 获取聊天序列的字符串表示
+  # 返回值示例：
+  # with Maria Lopez (Klaus Mueller converses with Maria Lopez)  --> with 对话对象 (描述)
+  # February 13, 2023, 12:15:10                                  --> 对话时间
+  # Klaus: Good morning Maria!                                   --> filling字段提取
+  # Maria: Morning Klaus, the usual coffee?
 
-    返回值:
-      str: 包含聊天摘要（与谁聊天、时间、内容）的格式化字符串。
-    """
+  def get_str_seq_chats(self):
+
     ret_str = ""
     for count, event in enumerate(self.seq_chat):
-      ret_str += f"with {event.object.content} ({event.description})\n"
-      ret_str += f'{event.created.strftime("%B %d, %Y, %H:%M:%S")}\n'
-      for row in event.filling:
+      ret_str += f"with {event.object.content} ({event.description})\n"      # with 对话对象 (描述)
+      ret_str += f'{event.created.strftime("%B %d, %Y, %H:%M:%S")}\n'        # 对话时间
+      for row in event.filling:                                              # filling字段提取
         ret_str += f"{row[0]}: {row[1]}\n"
     return ret_str
 
+  # s, p, o匹配关键词检索相关的思考节点
+  # 输入: ("Klaus Mueller", "thinks about", "research")
+  # 返回: {<ConceptNode1>, <ConceptNode2>, <ConceptNode3>}       --> 去重后的节点集合
+  # 这些ConceptNode对象包含与"Klaus Mueller"、"thinks about"、"research"相关的所有思考记忆
 
   def retrieve_relevant_thoughts(self, s_content, p_content, o_content): 
-    """
-    基于SPO内容检索相关的思考记忆
-    
-    通过关键词匹配的方式，从思考记忆中找出与给定SPO三元组相关的节点。
-    这是一种简单但有效的关联检索方法。
-    
-    参数:
-        s_content (str): 主语内容
-        p_content (str): 谓语内容  
-        o_content (str): 宾语内容
-        
-    返回:
-        set: 相关思考节点的集合
-        
-    示例:
-        retrieve_relevant_thoughts("Isabella", "painting", "art")
-        返回与绘画艺术相关的所有思考记忆
-    """
+
     contents = [s_content, p_content, o_content]
 
     ret = []
@@ -521,26 +376,13 @@ class AssociativeMemory:
     ret = set(ret)  # 去重
     return ret
 
+  # s,p,o匹配关键词检索相关的事件节点
+  # 输入: ("Isabella", "works at", "cafe")
+  # 返回: {<EventNode1>, <EventNode2>, <EventNode4>}             --> 去重后的节点集合
+  # 包含与"Isabella"、"works at"、"cafe"相关的所有事件记忆节点
 
   def retrieve_relevant_events(self, s_content, p_content, o_content): 
-    """
-    基于SPO内容检索相关的事件记忆
-    
-    通过关键词匹配的方式，从事件记忆中找出与给定SPO三元组相关的节点。
-    这用于寻找智能体的相关经历和观察。
-    
-    参数:
-        s_content (str): 主语内容
-        p_content (str): 谓语内容
-        o_content (str): 宾语内容
-        
-    返回:
-        set: 相关事件节点的集合
-        
-    示例:
-        retrieve_relevant_events("Isabella", "cooking", "kitchen")
-        返回Isabella在厨房做饭的相关事件记忆
-    """
+
     contents = [s_content, p_content, o_content]
 
     ret = []
@@ -552,23 +394,18 @@ class AssociativeMemory:
     return ret
 
 
+  # 输入: "Isabella Rodriguez"                                   --> 智能体姓名
+  # 返回: <ChatNode对象> 或 False
+  # 如果返回ChatNode，它包含：
+  # - subject: "Klaus Mueller"
+  # - predicate: "converses with"  
+  # - object: "Isabella Rodriguez"
+  # - description: "Klaus Mueller converses with Isabella Rodriguez"
+  # - created: datetime(2023, 2, 13, 14, 30, 25)
+  # - filling: [["Klaus", "Hello Isabella!"], ["Isabella", "Hi Klaus!"]]
+
   def get_last_chat(self, target_persona_name): 
-    """
-    获取与指定智能体的最近一次对话记录
-    
-    通过智能体姓名作为关键词，从对话记忆中查找最近的交流记录。
-    这用于维持对话的连续性和上下文。
-    
-    参数:
-        target_persona_name (str): 目标智能体的姓名
-        
-    返回:
-        ConceptNode or False: 最近的对话节点，如果没有则返回False
-        
-    示例:
-        get_last_chat("Klaus Mueller")
-        返回与Klaus的最近一次对话记忆，或False（如果从未对话）
-    """
+
     if target_persona_name.lower() in self.kw_to_chat: 
       # 返回该智能体对话列表中的第一个（最新的）
       return self.kw_to_chat[target_persona_name.lower()][0]

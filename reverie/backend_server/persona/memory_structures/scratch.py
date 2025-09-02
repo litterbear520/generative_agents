@@ -14,20 +14,20 @@ from global_methods import *
 class Scratch: 
   def __init__(self, f_saved): 
     # 智能体超参数
-    # <vision_r> 表示智能体可以看到周围的瓦片数量。
-    self.vision_r = 4
-    # <att_bandwidth> 注意力带宽
-    self.att_bandwidth = 3
+    # # <vision_r> 表示智能体可以看到周围的瓦片数量。
+    # self.vision_r = 4
+    # # <att_bandwidth> 注意力带宽
+    # self.att_bandwidth = 3
     # <retention> 保留期
     self.retention = 5
 
     # 世界信息
     # 感知的世界时间。
     self.curr_time = None
-    # 智能体的当前 x,y 瓦片坐标。
-    self.curr_tile = None
-    # 感知的世界每日要求。
-    self.daily_plan_req = None
+    # # 智能体的当前 x,y 瓦片坐标。
+    # self.curr_tile = None
+    # # 感知的世界每日要求。
+    # self.daily_plan_req = None
     
     # 智能体的核心身份
     # 关于智能体的基本信息。
@@ -44,52 +44,52 @@ class Scratch:
     self.lifestyle = None
     self.living_area = None
 
-    # 反思变量
-    self.concept_forget = 100
-    self.daily_reflection_time = 60 * 3
-    self.daily_reflection_size = 5
-    self.overlap_reflect_th = 2
-    self.kw_strg_event_reflect_th = 4
-    self.kw_strg_thought_reflect_th = 4
+    # # 反思变量
+    # self.concept_forget = 100
+    # self.daily_reflection_time = 60 * 3
+    # self.daily_reflection_size = 5
+    # self.overlap_reflect_th = 2
+    # self.kw_strg_event_reflect_th = 4
+    # self.kw_strg_thought_reflect_th = 4
 
-    # 新的反思变量
-    self.recency_w = 1
-    self.relevance_w = 1
-    self.importance_w = 1
-    self.recency_decay = 0.99
-    self.importance_trigger_max = 150
-    self.importance_trigger_curr = self.importance_trigger_max
-    self.importance_ele_n = 0 
-    self.thought_count = 5
+    # # 新的反思变量
+    # self.recency_w = 1
+    # self.relevance_w = 1
+    # self.importance_w = 1
+    # self.recency_decay = 0.99
+    # self.importance_trigger_max = 150
+    # self.importance_trigger_curr = self.importance_trigger_max
+    # self.importance_ele_n = 0 
+    # self.thought_count = 5
 
-    # 智能体规划
-    # <daily_req> 是智能体今天要实现的各种目标列表。
-    # 例如：['Work on her paintings for her upcoming show', 
-    #        'Take a break to watch some TV', 
-    #        'Make lunch for herself', 
-    #        'Work on her paintings some more', 
-    #        'Go to bed early']
-    # 它们必须在一天结束时更新，这就是为什么我们要跟踪它们首次生成的时间。
-    self.daily_req = []
-    # <f_daily_schedule> 表示一种长期规划形式，用于铺排人物当天的计划。
-    # 我们采用“长期规划 + 短期分解”的方法：先给出按小时的计划，随后逐步细化分解。
-    # 下面示例有三点说明：
-    # 1) 如 "sleeping" 不会再被分解（常见活动如睡眠被设定为不可分解）。
-    # 2) 某些元素会开始被分解，且随着一天进行会分解更多；被分解后仍保留原始的按小时描述。
-    # 3) 后续未分解的元素在新事件发生时可能会被替换或丢弃。
-    # 示例：[['sleeping', 360],
-    #       ['wakes up and ... (wakes up and stretches ...)', 5],
-    #       ['wakes up and starts her morning routine (out of bed )', 10],
-    #       ...
-    #       ['having lunch', 60],
-    #       ['working on her painting', 180], ...]
-    self.f_daily_schedule = []
-    # <f_daily_schedule_hourly_org> 初始时与 f_daily_schedule 相同，
-    # 但始终保留“未分解”的按小时版本。
-    # 示例：[['sleeping', 360],
-    #       ['wakes up and starts her morning routine', 120],
-    #       ['working on her painting', 240], ... ['going to bed', 60]]
-    self.f_daily_schedule_hourly_org = []
+    # # 智能体规划
+    # # <daily_req> 是智能体今天要实现的各种目标列表。
+    # # 例如：['Work on her paintings for her upcoming show', 
+    # #        'Take a break to watch some TV', 
+    # #        'Make lunch for herself', 
+    # #        'Work on her paintings some more', 
+    # #        'Go to bed early']
+    # # 它们必须在一天结束时更新，这就是为什么我们要跟踪它们首次生成的时间。
+    # self.daily_req = []
+    # # <f_daily_schedule> 表示一种长期规划形式，用于铺排人物当天的计划。
+    # # 我们采用“长期规划 + 短期分解”的方法：先给出按小时的计划，随后逐步细化分解。
+    # # 下面示例有三点说明：
+    # # 1) 如 "sleeping" 不会再被分解（常见活动如睡眠被设定为不可分解）。
+    # # 2) 某些元素会开始被分解，且随着一天进行会分解更多；被分解后仍保留原始的按小时描述。
+    # # 3) 后续未分解的元素在新事件发生时可能会被替换或丢弃。
+    # # 示例：[['sleeping', 360],
+    # #       ['wakes up and ... (wakes up and stretches ...)', 5],
+    # #       ['wakes up and starts her morning routine (out of bed )', 10],
+    # #       ...
+    # #       ['having lunch', 60],
+    # #       ['working on her painting', 180], ...]
+    # self.f_daily_schedule = []
+    # # <f_daily_schedule_hourly_org> 初始时与 f_daily_schedule 相同，
+    # # 但始终保留“未分解”的按小时版本。
+    # # 示例：[['sleeping', 360],
+    # #       ['wakes up and starts her morning routine', 120],
+    # #       ['working on her painting', 240], ... ['going to bed', 60]]
+    # self.f_daily_schedule_hourly_org = []
     
     # 当前动作（CURR ACTION）
     # <address> 为动作发生地点的字符串地址，形如
