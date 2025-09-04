@@ -1,7 +1,4 @@
 """
-作者: Joon Sung Park (joonspk@stanford.edu)
-
-文件: scratch.py
 描述: 定义生成式智能体的短期记忆模块。
 """
 import datetime

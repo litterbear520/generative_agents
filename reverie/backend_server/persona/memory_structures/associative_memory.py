@@ -1,3 +1,6 @@
+"""
+描述: 定义长期记忆模块。
+"""
 import sys
 sys.path.append('../../')
 
